@@ -21,6 +21,38 @@ else:
 emergency_context = None
 conversation_memory = []
 
+def text_to_speech(text, filename=None):
+    """Convert text to speech and display it - OFFLINE & FREE"""
+    if filename is None:
+        filename = f"tts_{len(conversation_memory)}.mp3"
+    
+    # DISPLAY THE TEXT (for AR goggles)
+    print(f"🖥️  SCREEN DISPLAY: {text}")
+    
+    try:
+        # Try pyttsx3 for offline TTS
+        import pyttsx3
+        
+        engine = pyttsx3.init()
+        engine.setProperty('rate', 180)  # Speaking speed
+        engine.setProperty('volume', 0.9)  # Volume
+        
+        # Save to audio file
+        engine.save_to_file(text, filename)
+        engine.runAndWait()
+        
+        # Auto-play the audio file (Windows)
+        import os
+        os.startfile(filename)
+        
+        print(f"🔊 AUDIO: Playing {filename}")
+        return filename
+        
+    except ImportError:
+        # Fallback if pyttsx3 not installed
+        print(f"🔇 [AUDIO WOULD SAY]: {text}")
+        return None
+
 def start_emergency_guidance(emergency_type):
     """Called by your ML model when emergency detected"""
     global emergency_context, conversation_memory
@@ -42,6 +74,9 @@ def start_emergency_guidance(emergency_type):
     
     first_step = get_gemini_response(prompt)
     conversation_memory.append(f"Gemini: {first_step}")
+    
+    # ADD TTS - DISPLAY AND AUDIO
+    text_to_speech(first_step, f"emergency_start.mp3")
     
     return {
         "intent": "emergency_started",
@@ -80,6 +115,9 @@ def process_user_response(user_text):
     conversation_memory.append(f"Gemini: {gemini_response}")
     emergency_context["steps_given"].append(gemini_response)
     
+    # ADD TTS - DISPLAY AND AUDIO
+    text_to_speech(gemini_response, f"response_{len(conversation_memory)}.mp3")
+    
     return {
         "intent": "emergency_guidance",
         "emergency_type": emergency_context["type"],
@@ -97,6 +135,4 @@ def get_gemini_response(prompt):
         )
         return response.text.strip()
     except Exception as e:
-        return "Please continue with the emergency procedure."
-
-# REMOVED THE SELF-IMPORT - that was causing the error
+        return f"Error: {e}"
