@@ -1,4 +1,5 @@
 # Backend/nlp_engine/stt_handler.py
+
 import speech_recognition as sr
 import pvporcupine
 import pyaudio
@@ -7,13 +8,18 @@ import threading
 import time
 from gemini_pipeline import process_text
 
+# ---------------- Wake Word Path ----------------
+wakeword_path = "wakewords/porcupine_mac_x86_64_aura_help.ppn"
+print("Using wake word:", wakeword_path)
+
+# ---------------- VoiceTrigger Class ----------------
 class VoiceTrigger:
     def __init__(self):
         self.is_listening = False
         try:
-            # Initialize Porcupine with custom wake word
+            # Initialize Porcupine with macOS wake word
             self.porcupine = pvporcupine.create(
-                keywords=["computer", "bumblebee"]  # Start with these, customize later
+                keyword_paths=[wakeword_path]
             )
             self.recognizer = sr.Recognizer()
             self.mic = sr.Microphone()
@@ -30,7 +36,7 @@ class VoiceTrigger:
         """Continuously listen for wake word in background"""
         if not self.porcupine:
             return
-            
+        
         pa = pyaudio.PyAudio()
         audio_stream = pa.open(
             rate=self.porcupine.sample_rate,
@@ -62,6 +68,7 @@ class VoiceTrigger:
             
             # Send to Gemini for intent analysis
             result = process_text(text)
+            print(f"🤖 Processed result: {result}")
             return result
             
         except sr.WaitTimeoutError:
@@ -72,6 +79,7 @@ class VoiceTrigger:
             print(f"❌ STT Error: {e}")
         return {"intent": "none"}
 
+# ---------------- Helper to Start Monitoring ----------------
 def start_voice_monitoring():
     """Start the voice trigger in background thread"""
     trigger = VoiceTrigger()
@@ -80,7 +88,7 @@ def start_voice_monitoring():
     voice_thread.start()
     return trigger
 
-# Quick test
+# ---------------- Quick Test ----------------
 if __name__ == "__main__":
     trigger = start_voice_monitoring()
     try:
