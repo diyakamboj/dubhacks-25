@@ -6,7 +6,7 @@ from detectors.choking import detect_choking
 with open("config.yaml", "r") as f:
     cfg = yaml.safe_load(f)
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 import time
 time.sleep(2)
 if not cap.isOpened():
