@@ -29,7 +29,9 @@ while True:
         print(f"🚨 Detected choking event! conf={event.confidence}")
         cv2.putText(frame, f"Choking! conf={event.confidence}", (20, 40),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
-        cv2.circle(frame, event.coords, 10, (0, 0, 255), -1)
+        h, w, _ = frame.shape
+        cx, cy = int(event.coords[0] * w), int(event.coords[1] * h)
+        cv2.circle(frame, (cx, cy), 10, (0, 0, 255), -1)
 
     cv2.imshow("Choking Detection", frame)
 
